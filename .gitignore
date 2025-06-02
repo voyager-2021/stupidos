@@ -1,0 +1,5 @@
+.vscode/
+build/
+*.err
+*.in
+*.out
