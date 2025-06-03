@@ -8,6 +8,7 @@ typedef signed long int int32_t;
 typedef unsigned long int uint32_t;
 typedef signed long long int int64_t;
 typedef unsigned long long int uint64_t;
+typedef unsigned long int uintptr_t;
 
 typedef uint8_t bool;
 
@@ -17,3 +18,10 @@ typedef uint8_t bool;
 #ifdef __INTELLISENSE__
 #define far // Fake far so IntelliSense shuts the fuck up
 #endif
+
+#define NULL ((void*)0)
+
+#define min(a,b)    ((a) < (b) ? (a) : (b))
+#define max(a,b)    ((a) > (b) ? (a) : (b))
+
+#define MK_FP(seg, ofs) ((void far *)(((unsigned long)(seg) << 16) | (unsigned short)(ofs)))
