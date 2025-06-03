@@ -51,13 +51,19 @@ ifeq ($(V), 1)
 	VFLAGS=-v
 	VDDLEVEL=progress
 	VMAKEFLAGS=
+	VFINDFLAGS=-print
 else
 	Q=@
 	NULL=&> /dev/null
 	VFLAGS=
 	VDDLEVEL=none
 	VMAKEFLAGS=--no-print-directory
+	VFINDFLAGS=-exec echo '  RM      ' {} +
 endif
+
+define PRINT_ACTION
+	@printf "  %-8s %s\n" "$(1)" "$(2)"
+endef
 
 .PHONY: all clean bootloader kernel tools_fat tools run
 
@@ -74,21 +80,23 @@ tools:       $(TOOL_BINS)
 # Floppy image
 #
 $(FLOPPY_IMG): $(STAGE1_BIN) $(STAGE2_BIN) $(KERNEL_BIN) | $(BUILD_DIR)
-	@echo -e '[${GREEN}+${RESET}] Creating floppy image...'
+	@$(call PRINT_ACTION,DD,$@)
 	$(Q)$(DD) if=/dev/zero of=$@ bs=512 count=2880 status=$(VDDLEVEL)
+	@$(call PRINT_ACTION,MKFS,$@)
 	$(Q)$(MKFS) -F 12 -n "OS" $@ $(NULL)
+	@$(call PRINT_ACTION,DD,$@)
 	$(Q)$(DD) if=$(STAGE1_BIN) of=$@ conv=notrunc status=$(VDDLEVEL)
-	@echo -e '[${GREEN}+${RESET}] Copying stage2 bootloader to image...'
+	@$(call PRINT_ACTION,MCOPY,$(STAGE2_BIN))
 	@if ! $(MCOPY) -i $@ $(STAGE2_BIN) "::stage2.bin" $(NULL); then \
 		echo -e '[${RED}*${RESET}] Mcopy failed!'; \
 		echo -e '[${RED}-${RESET}] Deleting image...'; \
 		rm -f $@; \
 		exit 1; \
 	fi
-	@echo -e '[${GREEN}+${RESET}] Copying kernel to image...'
+	@$(call PRINT_ACTION,MCOPY,$(KERNEL_BIN))
 	@if ! $(MCOPY) -i $@ $(KERNEL_BIN) "::kernel.bin" $(NULL); then \
-		echo -e '[${RED}*${RESET}] Mcopy failed!'; \
-		echo -e '[${RED}-${RESET}] Deleting image...'; \
+		echo -e '${RED}***${RESET} Mcopy failed!'; \
+		@$(call PRINT_ACTION,RM,$@); \
 		rm -f $@; \
 		exit 1; \
 	fi
@@ -97,18 +105,15 @@ $(FLOPPY_IMG): $(STAGE1_BIN) $(STAGE2_BIN) $(KERNEL_BIN) | $(BUILD_DIR)
 # Bootloader stages
 #
 $(STAGE1_BIN): $(STAGE1_DEPS) | $(BUILD_DIR)
-	@echo -e '[${GREEN}+${RESET}] Assembling stage1 bootloader...'
 	@$(MAKE) $(VMAKEFLAGS) -C $(SRC_DIR)/bootloader/stage1 BUILD_DIR=$(abspath $(BUILD_DIR)) V=$(V)
 
 $(STAGE2_BIN): $(STAGE2_DEPS) | $(BUILD_DIR)
-	@echo -e '[${GREEN}+${RESET}] Assembling stage2 bootloader...'
 	@$(MAKE) $(VMAKEFLAGS) -C $(SRC_DIR)/bootloader/stage2 BUILD_DIR=$(abspath $(BUILD_DIR)) V=$(V)
 
 #
 # Kernel
 #
 $(KERNEL_BIN): $(KERNEL_DEPS) | $(BUILD_DIR)
-	@echo -e '[${GREEN}+${RESET}] Assembling kernel...'
 	@$(MAKE) $(VMAKEFLAGS) -C $(SRC_DIR)/kernel BUILD_DIR=$(abspath $(BUILD_DIR)) V=$(V)
 
 #
@@ -117,40 +122,43 @@ $(KERNEL_BIN): $(KERNEL_DEPS) | $(BUILD_DIR)
 tools_fat: $(TOOL_BINS)
 
 $(BUILD_DIR)/tools/%: $(TOOLS_DIR)/%.c
-	@echo -e '[${GREEN}+${RESET}] Compiling tool: $<'
+	@$(call PRINT_ACTION,MKDIR,$@)
 	$(Q)mkdir -p $(VFLAGS) $(dir $@)
+	@$(call PRINT_ACTION,CC,$<)
 	$(Q)$(CC) $(CFLAGS) -o $@ $<
 
 #
 # Ensure build directory exists
 #
 $(BUILD_DIR):
+	@$(call PRINT_ACTION,MKDIR,$@)
 	$(Q)mkdir -p $@
 
 #
 # Clean
 #
 clean:
-	@echo -e '[${RED}-${RESET}] Cleaning build artifacts...'
+	@$(call PRINT_ACTION,CLEAN,$(BUILD_DIR))
 	$(Q)$(MAKE) $(VMAKEFLAGS) -C $(SRC_DIR)/bootloader/stage1 clean BUILD_DIR=$(abspath $(BUILD_DIR)) V=$(V)
 	$(Q)$(MAKE) $(VMAKEFLAGS) -C $(SRC_DIR)/bootloader/stage2 clean BUILD_DIR=$(abspath $(BUILD_DIR)) V=$(V)
 	$(Q)$(MAKE) $(VMAKEFLAGS) -C $(SRC_DIR)/kernel clean BUILD_DIR=$(abspath $(BUILD_DIR)) V=$(V)
-	$(Q)rm -rf $(VFLAGS) $(FLOPPY_IMG)
 	$(Q)rm -rf $(VFLAGS) $(BUILD_DIR)/$(TOOLS_DIR)
+	$(Q)rm -f $(VFLAGS) $(FLOPPY_IMG)
 
 #
 # Distclean
 #
-distclean: clean
-	@echo -e '[${RED}-${RESET}] Cleaning distruibution...'
+distclean:
+	@$(call PRINT_ACTION,RMDIR,$(BUILD_DIR))
 	$(Q)rm -rf $(VFLAGS) $(BUILD_DIR)
-	$(Q)rm -f $(VFLAGS) src/**/*.err src/**/*.out src/**/*.in
-	$(Q)rm -f $(VFLAGS) src/**/**/*.err src/**/**/*.out src/**/**/*.in
+	@$(call PRINT_ACTION,CLEAN,$(SRC_DIR))
+	$(Q)find src -name '*.err' -delete $(VFINDFLAGS)
 
 #
 # Run qemu
 #
 run: $(FLOPPY_IMG)
+	@$(call PRINT_ACTION,RUN,$<)
 	$(Q)qemu-system-x86_64 -drive format=raw,if=floppy,file=$(FLOPPY_IMG)
 
 #

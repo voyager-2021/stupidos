@@ -5,7 +5,7 @@ BUILD_DIR   ?= build
 SRC         := main.asm
 OUT         := $(BUILD_DIR)/kernel.bin
 
-V           ?= 0
+ V           ?= 0
 
 ifeq ($(V), 1)
 	Q=
@@ -19,6 +19,10 @@ else
 	VFLAGS=
 endif
 
+define PRINT_ACTION
+	@printf "  %-8s %s\n" "$(1)" "$(2)"
+endef
+
 .PHONY: all kernel clean
 
 all: kernel
@@ -26,9 +30,11 @@ all: kernel
 kernel: $(OUT)
 
 $(BUILD_DIR)/kernel.bin:
+	@$(call PRINT_ACTION,AS,src/kernel/$(SRC))
 	$(Q)$(ASM) $(ASMFLAGS) -f bin -o $(OUT) main.asm
 
 $(BUILD_DIR):
+	@$(call PRINT_ACTION,MKDIR,$@)
 	$(Q)mkdir -p $(VFLAGS) $@
 
 clean:

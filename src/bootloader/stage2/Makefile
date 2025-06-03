@@ -7,7 +7,8 @@ CFLAGS16     ?= -4 -d3 -s -wx -ms -zl -zq
 LD16         ?= /usr/bin/watcom/binl/wlink
 LDFLAGS16    ?=
 
-BUILD_DIR    ?= build
+BUILD_DIR     ?= build
+BUILD_DIR_REL = $(shell realpath --relative-to=$(CURDIR) $(BUILD_DIR))
 
 SOURCES_C     = $(wildcard *.c)
 SOURCES_ASM   = $(wildcard *.asm)
@@ -39,6 +40,12 @@ else
 	VFLAGS=
 endif
 
+define PRINT_ACTION
+	@printf "  %-8s %s\n" "$(1)" "$(2)"
+endef
+
+relpath = $(patsubst $(BUILD_DIR)/%,%,$(1))
+
 .PHONY: all stage2 clean
 
 all: stage2
@@ -46,24 +53,27 @@ all: stage2
 stage2: $(BUILD_DIR)/stage2.bin
 
 $(BUILD_DIR)/stage2.bin: $(OBJECTS_ASM) $(OBJECTS_C)
-	@echo -e "[${GREEN}+${RESET}] Linking: $<"
-	$(Q)$(LD16) $(LDFLAGS16) NAME $(BUILD_DIR)/stage2.bin FILE \{ $(OBJECTS_ASM) $(OBJECTS_C) \} OPTION MAP=$(BUILD_DIR)/stage2.map @linker.lnk $(NULLSTDOUT)
+	@$(call PRINT_ACTION,LD16,build/$(call relpath,$@))
+	$(Q)$(LD16) $(LDFLAGS16) NAME $@ FILE { $(OBJECTS_ASM) $(OBJECTS_C) } OPTION MAP=$(BUILD_DIR)/stage2.map @linker.lnk $(NULLSTDOUT)
 
 $(BUILD_DIR)/stage2/asm/%.obj: %.asm | $(BUILD_DIR)/stage2/asm
-	@echo -e "[${GREEN}+${RESET}] Assembling: $<"
+	@$(call PRINT_ACTION,AS,src/bootloader/$(call relpath,$@))
 	$(Q)$(ASM) $(ASMFLAGS) -f obj -o $@ $< $(NULLSTDOUT)
 
 $(BUILD_DIR)/stage2/c/%.o: %.c $(HEADERS) | $(BUILD_DIR)/stage2/c
-	@echo -e "[${GREEN}+${RESET}] Compiling: $<"
+	@$(call PRINT_ACTION,CC16,src/bootloader/$(call relpath,$@))
 	$(Q)$(CC16) $(CFLAGS16) -fo=$@ -ad=$(BUILD_DIR)/stage2/c/$*.d $< $(NULLSTDOUT)
 
 $(BUILD_DIR):
+	@$(call PRINT_ACTION,MKDIR,$(call relpath,$@))
 	$(Q)mkdir -p $(VFLAGS) $@
 
 $(BUILD_DIR)/stage2/c:
+	@$(call PRINT_ACTION,MKDIR,build/$(call relpath,$@))
 	$(Q)mkdir -p $(VFLAGS) $(BUILD_DIR)/stage2/c
 
 $(BUILD_DIR)/stage2/asm:
+	@$(call PRINT_ACTION,MKDIR,build/$(call relpath,$@))
 	$(Q)mkdir -p $(VFLAGS) $(BUILD_DIR)/stage2/asm
 
 clean:
