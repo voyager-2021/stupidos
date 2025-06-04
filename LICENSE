@@ -1,0 +1,18 @@
+Bare-Metal License v1.0
+
+Copyright (c) 2025 voyager-2021
+This software is inspired by and includes code from chibicitiberiu's nanobyte_os
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), subject to the following conditions:
+
+1. The Software and any derivatives may not be used for commercial purposes or any form of profit.
+
+2. Redistribution and use in source and binary forms, with or without modification, are permitted provided that:
+
+   a. Redistributions of source code must retain the above copyright notice, this list of conditions, and the following disclaimers.
+
+   b. Redistributions in binary form must reproduce the above copyright notice, this list of conditions, and the following disclaimers in the documentation and/or other materials provided with the distribution.
+
+   c. Any derived works must be released under a license that is OSI-approved and compatible with MIT, GPL, BSD, Apache, or similar open source licenses.
+
+3. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

@@ -1,3 +1,10 @@
+# Bare-Metal License v1.0
+# Copyright (c) 2025 voyager-2021
+# This software is inspired by and includes code from chibicitiberiu's nanobyte_os
+#
+# You may not use this software for commercial purposes or profit.
+# See LICENSE file for full terms.
+
 include scripts/config.mk
 
 ASMFLAGS    += -MD
@@ -29,6 +36,10 @@ MKFS         = mkfs.fat
 
 V           ?= 0
 
+SRC_C       := $(shell find src -type f \( -name '*.c' -o -name '*.h' \))
+SRC_ASM     := $(shell find src -type f \( -name '*.asm' -o -name '*.S' \))
+SRC_MK      := $(shell find . -path ./toolchain -prune -o -type f -name 'Makefile')
+
 ifeq ($(V), 1)
 	Q=
 	NULL=
@@ -49,7 +60,7 @@ define PRINT_ACTION
 	@printf "  %-8s %s\n" "$(1)" "$(2)"
 endef
 
-.PHONY: all clean bootloader kernel tools_fat tools run
+.PHONY: all clean distclean bootloader kernel tools_fat tools run debug autolicense
 
 #
 # Top-Level Targets
@@ -154,6 +165,12 @@ debug: $(FLOPPY_IMG)
 	@$(call PRINT_ACTION,DEBUG,$<)
 	$(Q)bochs -f .bochsrc
 
+#
+# License headers
+#
+autolicense:
+	@sh ./autolicense.sh
+
 # -include $(wildcard $(BUILD_DIR)/stage2/c/*.d)
 # -include $(wildcard $(BUILD_DIR)/stage2/asm/*.d)
 # -include $(wildcard $(BUILD_DIR)/tools/fat/*.d)
@@ -161,7 +178,7 @@ debug: $(FLOPPY_IMG)
 #
 # Include dependencies
 #
-DEPFILES := $(shell find $(abspath $(BUILD_DIR)) -name '*.d')
+DEPFILES := $(shell find $(abspath $(BUILD_DIR)) -name '*.d' 2>/dev/null || true)
 
 -include $(BUILD_DIR)/*.d
 -include $(DEPFILES)

@@ -1,3 +1,12 @@
+/*
+ * Bare-Metal License v1.0
+ * Copyright (c) 2025 voyager-2021
+ * This software is inspired by and includes code from chibicitiberiu's nanobyte_os
+ *
+ * You may not use this software for commercial purposes or profit.
+ * See LICENSE file for full terms.
+ */
+
 #include "stdio.h"
 #include "x86.h"
 
@@ -8,7 +17,7 @@ const unsigned SCREEN_WIDTH = 80;
 const unsigned SCREEN_HEIGHT = 25;
 const uint8_t DEFAULT_COLOR = 0x7;
 
-uint8_t* g_ScreenBuffer = (uint8_t*)0xB8000;
+uint8_t* g_ScreenBuffer = (uint8_t*)0xb8000;
 int g_ScreenX = 0, g_ScreenY = 0;
 
 void putchr(int x, int y, char c)
@@ -82,7 +91,7 @@ void putc(char c)
             g_ScreenX = 0;
             g_ScreenY++;
             break;
-    
+
         case '\t':
             for (int i = 0; i < 4 - (g_ScreenX % 4); i++)
                 putc(' ');
@@ -125,15 +134,12 @@ void printf_unsigned(unsigned long long number, int radix)
     char buffer[32];
     int pos = 0;
 
-    // convert number to ASCII
-    do 
-    {
+    do {
         unsigned long long rem = number % radix;
         number /= radix;
         buffer[pos++] = g_HexChars[rem];
     } while (number > 0);
 
-    // print number in reverse order
     while (--pos >= 0)
         putc(buffer[pos]);
 }
@@ -223,7 +229,7 @@ void printf(const char* fmt, ...)
                     case 'c':   putc((char)va_arg(args, int));
                                 break;
 
-                    case 's':   
+                    case 's':
                                 puts(va_arg(args, const char*));
                                 break;
 
@@ -245,7 +251,6 @@ void printf(const char* fmt, ...)
                     case 'o':   radix = 8; sign = false; number = true;
                                 break;
 
-                    // ignore invalid spec
                     default:    break;
                 }
 
@@ -275,7 +280,7 @@ void printf(const char* fmt, ...)
                         case PRINTF_LENGTH_SHORT:
                         case PRINTF_LENGTH_DEFAULT:     printf_unsigned(va_arg(args, unsigned int), radix);
                                                         break;
-                                                        
+
                         case PRINTF_LENGTH_LONG:        printf_unsigned(va_arg(args, unsigned  long), radix);
                                                         break;
 
@@ -290,6 +295,7 @@ void printf(const char* fmt, ...)
                 length = PRINTF_LENGTH_DEFAULT;
                 radix = 10;
                 sign = false;
+                number = false;
                 break;
         }
 
@@ -302,7 +308,7 @@ void printf(const char* fmt, ...)
 void print_buffer(const char* msg, const void* buffer, uint32_t count)
 {
     const uint8_t* u8Buffer = (const uint8_t*)buffer;
-    
+
     puts(msg);
     for (uint16_t i = 0; i < count; i++)
     {

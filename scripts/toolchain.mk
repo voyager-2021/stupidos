@@ -35,6 +35,7 @@ toolchain_binutils: toolchain/$(BINUTILS_NAME).tar.xz
 	$(Q)rm -rf toolchain/$(BINUTILS_NAME)/build
 	$(Q)mkdir -p toolchain/$(BINUTILS_NAME)/build
 	$(Q)cd toolchain/$(BINUTILS_NAME)/build && \
+		CFLAGS= ASMFLAGS= CC= CXX= LD= ASM= LINKFLAGS= LIBS= \
 		../configure \
 			--prefix="$(TOOLCHAIN_PREFIX)"  \
 			--target=$(TARGET)              \
@@ -52,7 +53,7 @@ toolchain_binutils: toolchain/$(BINUTILS_NAME).tar.xz
 toolchain/$(BINUTILS_NAME).tar.xz:
 	$(call PRINT_ACTION,GET,$(BINUTILS_NAME).tar.xz)
 	$(Q)mkdir -p toolchain
-	$(Q)cd toolchain && wget $(BINUTILS_URL) $(NULLSTDERR)
+	@[ -f toolchain/$(BINUTILS_NAME).tar.xz ] || wget -P toolchain $(BINUTILS_URL) $(NULLSTDERR)
 	$(Q)cd toolchain && tar xf $(BINUTILS_NAME).tar.xz $(NULLSTDOUT)
 
 toolchain_gcc: toolchain_binutils toolchain/$(GCC_NAME).tar.xz
@@ -60,6 +61,7 @@ toolchain_gcc: toolchain_binutils toolchain/$(GCC_NAME).tar.xz
 	$(Q)rm -rf toolchain/$(GCC_NAME)/build
 	$(Q)mkdir -p toolchain/$(GCC_NAME)/build
 	$(Q)cd toolchain/$(GCC_NAME)/build && \
+		CFLAGS= ASMFLAGS= CC= CXX= LD= ASM= LINKFLAGS= LIBS=\
 		../configure \
 			--prefix="$(TOOLCHAIN_PREFIX)"  \
 			--target=$(TARGET)              \
@@ -77,7 +79,7 @@ toolchain_gcc: toolchain_binutils toolchain/$(GCC_NAME).tar.xz
 toolchain/$(GCC_NAME).tar.xz:
 	$(call PRINT_ACTION,GET,$(GCC_NAME).tar.xz)
 	$(Q)mkdir -p toolchain
-	$(Q)cd toolchain && wget $(GCC_URL) $(NULLSTDERR)
+	@[ -f toolchain/$(GCC_NAME).tar.xz ] || wget -P toolchain $(GCC_URL) $(NULLSTDERR)
 	$(Q)cd toolchain && tar xf $(GCC_NAME).tar.xz $(NULLSTDOUT)
 
 clean-toolchain:
