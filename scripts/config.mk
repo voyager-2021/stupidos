@@ -2,13 +2,13 @@ SRC_DIR                       = src
 TOOLS_DIR                     = tools
 BUILD_DIR                     = build
 
-export ASM                    = nasm
+export ASM                    =
 export ASMFLAGS               =
 export CC                     = gcc
-export CFLAGS                 = #-std=c99 -g
+export CFLAGS                 =
 export CXX                    = g++
-export CXXFLAGS               = #-std=c99 -g
-export LD                     = gcc
+export CXXFLAGS               =
+export LD                     = ld
 export LDFLAGS                =
 export LIBS                   =
 

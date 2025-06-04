@@ -1,5 +1,3 @@
-ASM         ?= nasm
-
 SRC         := boot.asm
 OUT         := $(BUILD_DIR)/stage1.bin
 
@@ -29,11 +27,11 @@ stage1: $(OUT)
 
 $(OUT): $(SRC) | $(BUILD_DIR)
 	@$(call PRINT_ACTION,AS,src/bootloader/stage1/$(SRC))
-	$(Q)$(ASM) $(ASMFLAGS) -MD -MF $(OUT).d -f bin -o $@ $<
+	$(Q)$(TARGET_ASM) $(TARGET_ASMFLAGS) -MD -MF $(OUT).d -f bin -o $@ $<
 
 $(BUILD_DIR):
 	@$(call PRINT_ACTION,MKDIR,$@)
-	$(Q)mkdir -p $(VFLAGS) $@
+	$(Q)mkdir -p $@
 
 clean:
 	$(Q)rm -rf $(VFLAGS) $(OUT) $(BUILD_DIR)/stage1.bin.d
