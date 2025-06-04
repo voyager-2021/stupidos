@@ -113,9 +113,9 @@ _start:
     mov dl, [ebr_drive_number]
     call disk_read
 
-    mov bx, KERNEL_LOAD_SEGMENT
+    mov bx, STAGE2_LOAD_SEGMENT
     mov es, bx
-    mov bx, KERNEL_LOAD_OFFSET
+    mov bx, STAGE2_LOAD_OFFSET
 
 .load_stage2:
     mov ax, [stage2_cluster]
@@ -155,19 +155,16 @@ _start:
 
 .read_finish:
     mov dl, [ebr_drive_number]
-    mov ax, KERNEL_LOAD_SEGMENT
+    mov ax, STAGE2_LOAD_SEGMENT
     mov ds, ax
     mov es, ax
 
-    jmp KERNEL_LOAD_SEGMENT:KERNEL_LOAD_OFFSET
+    jmp STAGE2_LOAD_SEGMENT:STAGE2_LOAD_OFFSET
 
     jmp wait_key_and_reboot
 
     cli
     hlt
-
-.halt:
-    jmp .halt
 
 ;
 ; Basic routines
@@ -323,8 +320,8 @@ msg_stage2_not_found: db 'Stage 2 not found!', ENDL, 0
 file_stage2_bin: db 'STAGE2  BIN'
 stage2_cluster: dw 0
 
-KERNEL_LOAD_SEGMENT equ 0x2000
-KERNEL_LOAD_OFFSET equ 0x0000
+STAGE2_LOAD_SEGMENT equ 0x0
+STAGE2_LOAD_OFFSET equ 0x500
 
 times 510-($-$$) db 0
 dw 0xaa55

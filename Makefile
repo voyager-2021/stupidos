@@ -1,21 +1,10 @@
-ASM          = nasm
-ASMFLAGS     = -MD
+include scripts/config.mk
 
-CC           = gcc
-CFLAGS       = -MMD -MF $(BUILD_DIR)/tools/$*.d
-
-CC16         = /usr/bin/watcom/binl/wcc
-CFLAGS16     =
-
-LD16         = /usr/bin/watcom/binl/wlink
-LDFLAGS16    =
-
-SRC_DIR      = src
-TOOLS_DIR    = tools
-BUILD_DIR    = build
+ASMFLAGS    += -MD
+CFLAGS      += -MMD -MF $(BUILD_DIR)/tools/$*.d
 
 STAGE1_SRC   = $(SRC_DIR)/bootloader/stage1/boot.asm
-STAGE2_SRC   = $(SRC_DIR)/bootloader/stage2/main.asm
+STAGE2_SRC   = $(SRC_DIR)/bootloader/stage2/entry.asm
 KERNEL_SRC   = $(SRC_DIR)/kernel/main.asm
 
 STAGE1_DEPS := $(wildcard $(SRC_DIR)/bootloader/stage1/*.asm)
@@ -24,7 +13,7 @@ STAGE2_DEPS := $(wildcard $(SRC_DIR)/bootloader/stage2/*.asm) \
                $(wildcard $(SRC_DIR)/bootloader/stage2/*.c) \
                $(wildcard $(SRC_DIR)/bootloader/stage2/*.h)
 
-KERNEL_DEPS  := $(wildcard $(SRC_DIR)/kernel/*.asm)
+KERNEL_DEPS := $(wildcard $(SRC_DIR)/kernel/*.c) $(wildcard $(SRC_DIR)/kernel/*.asm)
 
 STAGE1_BIN   = $(BUILD_DIR)/stage1.bin
 STAGE2_BIN   = $(BUILD_DIR)/stage2.bin
@@ -39,11 +28,6 @@ DD           = dd
 MKFS         = mkfs.fat
 
 V           ?= 0
-
-GREEN        = \033[0;32m
-YELLOW       = \033[0;33m
-RED          = \033[0;31m
-RESET        = \033[0m
 
 ifeq ($(V), 1)
 	Q=
@@ -76,6 +60,8 @@ bootloader:  $(STAGE1_BIN) $(STAGE2_BIN)
 kernel:      $(KERNEL_BIN)
 tools:       $(TOOL_BINS)
 
+include scripts/toolchain.mk
+
 #
 # Floppy image
 #
@@ -88,15 +74,15 @@ $(FLOPPY_IMG): $(STAGE1_BIN) $(STAGE2_BIN) $(KERNEL_BIN) | $(BUILD_DIR)
 	$(Q)$(DD) if=$(STAGE1_BIN) of=$@ conv=notrunc status=$(VDDLEVEL)
 	@$(call PRINT_ACTION,MCOPY,$(STAGE2_BIN))
 	@if ! $(MCOPY) -i $@ $(STAGE2_BIN) "::stage2.bin" $(NULL); then \
-		echo -e '[${RED}*${RESET}] Mcopy failed!'; \
-		echo -e '[${RED}-${RESET}] Deleting image...'; \
+		echo -e '*** Mcopy failed!'; \
+		$(call PRINT_ACTION,RM,$@);  \
 		rm -f $@; \
 		exit 1; \
 	fi
 	@$(call PRINT_ACTION,MCOPY,$(KERNEL_BIN))
 	@if ! $(MCOPY) -i $@ $(KERNEL_BIN) "::kernel.bin" $(NULL); then \
-		echo -e '${RED}***${RESET} Mcopy failed!'; \
-		@$(call PRINT_ACTION,RM,$@); \
+		echo -e '*** Mcopy failed!'; \
+		$(call PRINT_ACTION,RM,$@); \
 		rm -f $@; \
 		exit 1; \
 	fi
@@ -162,11 +148,28 @@ run: $(FLOPPY_IMG)
 	$(Q)qemu-system-x86_64 -drive format=raw,if=floppy,file=$(FLOPPY_IMG)
 
 #
-# Include dependencies
+# Debug
 #
--include $(BUILD_DIR)/*.d
--include $(wildcard $(BUILD_DIR)/**/**/*.d)
+debug: $(FLOPPY_IMG)
+	@$(call PRINT_ACTION,DEBUG,$<)
+	$(Q)bochs -f .bochsrc
 
 # -include $(wildcard $(BUILD_DIR)/stage2/c/*.d)
 # -include $(wildcard $(BUILD_DIR)/stage2/asm/*.d)
 # -include $(wildcard $(BUILD_DIR)/tools/fat/*.d)
+
+#
+# Include dependencies
+#
+DEPFILES := $(shell find $(abspath $(BUILD_DIR)) -name '*.d')
+
+-include $(BUILD_DIR)/*.d
+-include $(DEPFILES)
+
+-include $(wildcard $(BUILD_DIR)/*.d)
+
+-include $(wildcard $(BUILD_DIR)/kernel/c/*.d)
+-include $(wildcard $(BUILD_DIR)/kernel/asm/*.d)
+
+-include $(wildcard $(BUILD_DIR)/stage2/c/*.d)
+-include $(wildcard $(BUILD_DIR)/stage2/asm/*.d)

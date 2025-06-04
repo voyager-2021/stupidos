@@ -1,11 +1,18 @@
-ASM         ?= nasm
-ASMFLAGS    ?= -MD -MF $(BUILD_DIR)/kernel.d
+TARGET_ASMFLAGS  += -f elf -MD -MF $(@:.obj=.d)
+TARGET_CFLAGS    += -ffreestanding -nostdlib -MMD -MF $(@:.obj=.d)
+TARGET_LIBS      += -lgcc
+TARGET_LDFLAGS   += -T linker.ld -nostdlib
 
-BUILD_DIR   ?= build
-SRC         := main.asm
-OUT         := $(BUILD_DIR)/kernel.bin
+SOURCES_C         = $(wildcard *.c)
+SOURCES_ASM       = $(wildcard *.asm)
 
- V           ?= 0
+OBJECTS_C         = $(patsubst %.c, $(BUILD_DIR)/kernel/c/%.obj, $(SOURCES_C))
+OBJECTS_ASM       = $(patsubst %.asm, $(BUILD_DIR)/kernel/asm/%.obj, $(SOURCES_ASM))
+
+DEPS_C            = $(OBJECTS_C:.obj=.d)
+DEPS_ASM          = $(OBJECTS_ASM:.obj=.d)
+
+V                ?= 0
 
 ifeq ($(V), 1)
 	Q=
@@ -23,21 +30,46 @@ define PRINT_ACTION
 	@printf "  %-8s %s\n" "$(1)" "$(2)"
 endef
 
+relpath = $(patsubst $(BUILD_DIR)/%,%,$(1))
+
 .PHONY: all kernel clean
 
 all: kernel
 
-kernel: $(OUT)
+kernel: $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/kernel.bin.d
 
-$(BUILD_DIR)/kernel.bin:
-	@$(call PRINT_ACTION,AS,src/kernel/$(SRC))
-	$(Q)$(ASM) $(ASMFLAGS) -f bin -o $(OUT) main.asm
+$(BUILD_DIR)/kernel.bin: $(OBJECTS_ASM) $(OBJECTS_C)
+	@$(call PRINT_ACTION,LD,build/$(call relpath,$@))
+	$(Q)$(TARGET_LD) $(TARGET_LDFLAGS) -Wl,-Map=$(BUILD_DIR)/kernel.map -o $@ $^ $(TARGET_LIBS) $(NULLSTDOUT)
+
+$(BUILD_DIR)/kernel/c/%.obj: %.c | $(BUILD_DIR)/kernel/c
+	@$(call PRINT_ACTION,CC,src/kernel/$(call relpath,$*).c)
+	$(Q)$(TARGET_CC) $(TARGET_CFLAGS) -c -o $@ $< $(NULLSTDOUT)
+
+$(BUILD_DIR)/kernel/asm/%.obj: %.asm | $(BUILD_DIR)/kernel/asm
+	@$(call PRINT_ACTION,AS,src/kernel/$(call relpath,$*).asm)
+	$(Q)$(TARGET_ASM) $(TARGET_ASMFLAGS) -o $@ $< -MD -MF $(BUILD_DIR)/kernel/asm/$*.d $(NULLSTDOUT)
 
 $(BUILD_DIR):
-	@$(call PRINT_ACTION,MKDIR,$@)
-	$(Q)mkdir -p $(VFLAGS) $@
+	@$(call PRINT_ACTION,MKDIR,$(call relpath,$@))
+	$(Q)mkdir -p $@
+
+$(BUILD_DIR)/kernel/c:
+	@$(call PRINT_ACTION,MKDIR,build/$(call relpath,$@))
+	$(Q)mkdir -p $@
+
+$(BUILD_DIR)/kernel/asm:
+	@$(call PRINT_ACTION,MKDIR,build/$(call relpath,$@))
+	$(Q)mkdir -p $@
+
+$(BUILD_DIR)/kernel.bin.d: $(C_SOURCES) $(wildcard *.h) linker.ld
+	@mkdir -p $(dir $@)
+	@printf "$(BUILD_DIR)/kernel.bin: " > $@
+	@printf "%s " $^ >> $@
+	@printf "\n" >> $@
 
 clean:
-	$(Q)rm -rf $(VFLAGS) $(OUT) $(BUILD_DIR)/kernel.d
+	$(Q)rm -rf $(BUILD_DIR)/kernel
+	$(Q)rm -f $(BUILD_DIR)/kernel.*
 
--include $(BUILD_DIR)/kernel.d
+-include $(DEPS_C) $(DEPS_ASM)

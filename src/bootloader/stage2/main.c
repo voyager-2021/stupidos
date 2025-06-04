@@ -1,84 +1,49 @@
-#include "disk.h"
-#include "fat.h"
-#include "stdint.h"
+#include <stdint.h>
 #include "stdio.h"
 #include "x86.h"
+#include "disk.h"
+#include "fat.h"
+#include "memdefs.h"
+#include "memory.h"
 
-void far* g_data = (void far*)0x00500200;
+uint8_t* KernelLoadBuffer = (uint8_t*)MEMORY_LOAD_KERNEL;
+uint8_t* Kernel = (uint8_t*)MEMORY_KERNEL_ADDR;
 
-#define MAX_HANDLES 16
-#define TARGET_SIZE 10*1024 // 80 KB
+typedef void (*KernelStart)();
 
-void _cdecl cstart_(uint16_t bootDrive)
+void __attribute__((cdecl)) start(uint16_t bootDrive)
 {
-    printf("Hello from C!\r\n\n");
+    clrscr();
+    printf("Loading kernel...\r\n");
 
     DISK disk;
-    if (!DISK_Initialize(&disk, bootDrive)) {
+    if (!DISK_Initialize(&disk, bootDrive))
+    {
         printf("Disk init error\r\n");
         goto end;
     }
 
-    DISK_ReadSectors(&disk, 19, 1, g_data);
-
-    if (!FAT_Initialize(&disk)) {
+    if (!FAT_Initialize(&disk))
+    {
         printf("FAT init error\r\n");
         goto end;
     }
 
-    printf("Directory of '::/':\r\n");
-
-    FAT_File far* fd = FAT_Open(&disk, "/");
-    FAT_DirectoryEntry entry;
-    int i = 0;
-
-    while (FAT_ReadEntry(&disk, fd, &entry) && i++ < 5)
-    {
-        printf("  ");
-        for (int i = 0; i < 11; i++)
-            putc(entry.Name[i]);
-        printf("\r\n");
-    }
-
-    FAT_Close(fd);
-
-    printf("Contents of '::/testdir/test.txt':\r\n");
-
-    char buffer[100];
+    // load kernel
+    FAT_File* fd = FAT_Open(&disk, "/kernel.bin");
     uint32_t read;
-    fd = FAT_Open(&disk, "testdir/test.txt");
-
-    while ((read = FAT_Read(&disk, fd, sizeof(buffer), buffer))) {
-        for (uint32_t i = 0; i < read; i++)
-        {
-            if (buffer[i] == '\n')
-                putc('\r');
-            putc(buffer[i]);
-        }
+    uint8_t* kernelBuffer = Kernel;
+    while ((read = FAT_Read(&disk, fd, MEMORY_LOAD_SIZE, KernelLoadBuffer)))
+    {
+        memcpy(kernelBuffer, KernelLoadBuffer, read);
+        kernelBuffer += read;
     }
-
     FAT_Close(fd);
 
-    printf("\r\n");
-
-    FAT_File far* handles[MAX_HANDLES] = {0};
-    int opened = 0;
-
-    for (int i = 0; i < MAX_HANDLES; i++) {
-        handles[i] = FAT_Open(&disk, "stage2.bin");  // or any valid file
-        if (handles[i]) {
-            opened++;
-        } else {
-            break;
-        }
-    }
-
-    printf("Opened %d handles\r\n", opened);
-
-    for (int i = 0; i < opened; i++) {
-        FAT_Close(handles[i]);
-    }
+    // execute kernel
+    KernelStart kernelStart = (KernelStart)Kernel;
+    kernelStart();
 
 end:
-    x86_Halt();
+    for (;;);
 }

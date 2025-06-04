@@ -1,32 +1,20 @@
-ASM          ?= nasm
-ASMFLAGS     ?= -MD -MF $(@:.obj=.d)
+TARGET_ASMFLAGS  += -f elf -MD -MF $(@:.obj=.d)
+TARGET_CFLAGS    += -ffreestanding -nostdlib
+TARGET_LIBS      += -lgcc
+TARGET_LDFLAGS   += -T linker.ld -nostdlib
 
-CC16         ?= /usr/bin/watcom/binl/wcc
-CFLAGS16     ?= -4 -d3 -s -wx -ms -zl -zq -za99
+SOURCES_C         = $(wildcard *.c)
+SOURCES_ASM       = $(wildcard *.asm)
 
-LD16         ?= /usr/bin/watcom/binl/wlink
-LDFLAGS16    ?=
+OBJECTS_C         = $(patsubst %.c, $(BUILD_DIR)/stage2/c/%.obj, $(SOURCES_C))
+OBJECTS_ASM       = $(patsubst %.asm, $(BUILD_DIR)/stage2/asm/%.obj, $(SOURCES_ASM))
 
-BUILD_DIR     ?= build
-BUILD_DIR_REL = $(shell realpath --relative-to=$(CURDIR) $(BUILD_DIR))
+DEPS_C            = $(OBJECTS_C:.obj=.d)
+DEPS_ASM          = $(OBJECTS_ASM:.obj=.d)
 
-SOURCES_C     = $(wildcard *.c)
-SOURCES_ASM   = $(wildcard *.asm)
+HEADERS          := $(wildcard *.h)
 
-OBJECTS_C     = $(patsubst %.c, $(BUILD_DIR)/stage2/c/%.o, $(SOURCES_C))
-OBJECTS_ASM   = $(patsubst %.asm, $(BUILD_DIR)/stage2/asm/%.obj, $(SOURCES_ASM))
-
-DEPS_C        = $(OBJECTS_C:.o=.d)
-DEPS_ASM      = $(OBJECTS_ASM:.obj=.d)
-
-HEADERS      := $(wildcard *.h)
-
-V            ?= 0
-
-GREEN         = \033[0;32m
-YELLOW        = \033[0;33m
-RED           = \033[0;31m
-RESET         = \033[0m
+V                ?= 0
 
 ifeq ($(V), 1)
 	Q=
@@ -53,17 +41,18 @@ all: stage2
 stage2: $(BUILD_DIR)/stage2.bin
 
 $(BUILD_DIR)/stage2.bin: $(OBJECTS_ASM) $(OBJECTS_C)
-	@$(call PRINT_ACTION,LD16,build/$(call relpath,$@))
-	$(Q)$(LD16) $(LDFLAGS16) NAME $@ FILE { $(OBJECTS_ASM) $(OBJECTS_C) } OPTION MAP=$(BUILD_DIR)/stage2.map @linker.lnk $(NULLSTDOUT)
+	@$(call PRINT_ACTION,LD,build/$(call relpath,$@))
+	$(Q)$(TARGET_LD) $(TARGET_LDFLAGS) -Wl,-Map=$(BUILD_DIR)/stage2.map -o $@ $^ $(TARGET_LIBS) $(NULLSTDOUT)
+
+$(BUILD_DIR)/stage2/c/%.obj: %.c $(HEADERS) | $(BUILD_DIR)/stage2/c
+	@$(call PRINT_ACTION,CC,src/bootloader/stage2/$(call relpath,$*).c)
+	$(Q)$(TARGET_CC) $(TARGET_CFLAGS) -c -o $@ -MMD -MF $(BUILD_DIR)/stage2/c/$*.d $< $(NULLSTDOUT)
 
 $(BUILD_DIR)/stage2/asm/%.obj: %.asm | $(BUILD_DIR)/stage2/asm
-	@$(call PRINT_ACTION,AS,src/bootloader/$(call relpath,$@))
-	$(Q)$(ASM) $(ASMFLAGS) -f obj -o $@ $< $(NULLSTDOUT)
+	@$(call PRINT_ACTION,AS,src/bootloader/stage2/$(call relpath,$*).asm)
+	$(Q)$(TARGET_ASM) $(TARGET_ASMFLAGS) -o $@ $< $(NULLSTDOUT)
 
-$(BUILD_DIR)/stage2/c/%.o: %.c $(HEADERS) | $(BUILD_DIR)/stage2/c
-	@$(call PRINT_ACTION,CC16,src/bootloader/$(call relpath,$@))
-	$(Q)$(CC16) $(CFLAGS16) -fo=$@ -ad=$(BUILD_DIR)/stage2/c/$*.d $< $(NULLSTDOUT)
-
+#
 $(BUILD_DIR):
 	@$(call PRINT_ACTION,MKDIR,$(call relpath,$@))
 	$(Q)mkdir -p $(VFLAGS) $@

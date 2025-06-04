@@ -82,7 +82,7 @@ void putc(char c)
             g_ScreenX = 0;
             g_ScreenY++;
             break;
-
+    
         case '\t':
             for (int i = 0; i < 4 - (g_ScreenX % 4); i++)
                 putc(' ');
