@@ -12,7 +12,7 @@ My stupid floppy disk OS is a small educational operating system project built f
 
 ## Showcase
 
-![Showcase](https://i.imgur.com/m0SsWq3.png)
+[Imgur](https://i.imgur.com/m0SsWq3.png)
 
 ---
 
