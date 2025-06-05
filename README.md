@@ -1,6 +1,6 @@
 # stupidos
 
-![License](https://img.shields.io/badge/license-Bare%20Metal-blue.svg) ![GitHub stars](https://img.shields.io/github/stars/voyager-2021/stupidos?style=social) ![Last Commit](https://img.shields.io/github/last-commit/voyager-2021/stupidos) ![Lines of Code](https://raw.githubusercontent.com/voyager-2021/stupidos/image-data/badge.svg)
+![License](https://img.shields.io/badge/license-Bare%20Metal-blue.svg) ![GitHub stars](https://img.shields.io/github/stars/voyager-2021/stupidos?style=social) ![Last Commit](https://img.shields.io/github/last-commit/voyager-2021/stupidos) ![Lines of Code](https://raw.githubusercontent.com/voyager-2021/stupidos/image-data/loc-badge.svg)
 
 ---
 
