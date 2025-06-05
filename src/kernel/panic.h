@@ -13,7 +13,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include "comtypes.h"
+#include <utils/ptr.h>
 
 // Define NORETURN macro for compiler-specific noreturn attribute
 #if defined(_MSC_VER)

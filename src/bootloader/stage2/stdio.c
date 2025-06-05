@@ -232,7 +232,7 @@ void printf(const char* fmt, ...)
                     case 'c':   putc((char)va_arg(args, int));
                                 break;
 
-                    case 's':   
+                    case 's':
                                 puts(va_arg(args, const char*));
                                 break;
 
@@ -254,7 +254,6 @@ void printf(const char* fmt, ...)
                     case 'o':   radix = 8; sign = false; number = true;
                                 break;
 
-                    // ignore invalid spec
                     default:    break;
                 }
 
@@ -284,7 +283,7 @@ void printf(const char* fmt, ...)
                         case PRINTF_LENGTH_SHORT:
                         case PRINTF_LENGTH_DEFAULT:     printf_unsigned(va_arg(args, unsigned int), radix);
                                                         break;
-                                                        
+
                         case PRINTF_LENGTH_LONG:        printf_unsigned(va_arg(args, unsigned  long), radix);
                                                         break;
 
@@ -299,6 +298,7 @@ void printf(const char* fmt, ...)
                 length = PRINTF_LENGTH_DEFAULT;
                 radix = 10;
                 sign = false;
+                bool number = false;
                 break;
         }
 
@@ -311,7 +311,7 @@ void printf(const char* fmt, ...)
 void print_buffer(const char* msg, const void* buffer, uint32_t count)
 {
     const uint8_t* u8Buffer = (const uint8_t*)buffer;
-    
+
     puts(msg);
     for (uint16_t i = 0; i < count; i++)
     {

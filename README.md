@@ -8,11 +8,7 @@
 
 My stupid floppy disk OS is a small educational operating system project built from scratch. It consists of a 512-byte Stage 1 bootloader, a Stage 2 bootloader that initializes the system and loads the kernel, and a simple kernel that currently prints "Hello from kernel!!!". Inspired by and code from chibicitiberiu’s nanobyte_os.
 
----
-
-## Showcase
-
-[Imgur](https://i.imgur.com/m0SsWq3.png)
+Here is a [showcase](https://i.imgur.com/m0SsWq3.png) of it in action.
 
 ---
 

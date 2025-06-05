@@ -5,7 +5,6 @@
 ; You may not use this software for commercial purposes or profit.
 ; See LICENSE file for full terms.
 
-
 global x86_outb
 x86_outb:
     [bits 32]

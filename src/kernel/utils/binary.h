@@ -9,8 +9,5 @@
 
 #pragma once
 
-#define min(a,b)    ((a) < (b) ? (a) : (b))
-#define max(a,b)    ((a) > (b) ? (a) : (b))
-
-#define MK_FP(seg, ofs) ((void*)((unsigned long)(seg) << 4) + (unsigned long)(ofs))
-
+#define FLAG_SET(n, flag) n |= (flag)
+#define FLAG_CLEAR(n, flag) n &= ~(flag)

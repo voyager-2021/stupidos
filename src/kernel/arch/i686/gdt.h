@@ -9,10 +9,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#define i686_GDT_CODE_SEGMENT 0x8
+#define i686_GDT_DATA_SEGMENT 0x10
 
-void clrscr();
-void putc(char c);
-void puts(const char* str);
-void printf(const char* fmt, ...);
-void print_buffer(const char* msg, const void* buffer, uint32_t count);
+void i686_GDT_Initialize();

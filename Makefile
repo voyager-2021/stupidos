@@ -20,7 +20,10 @@ STAGE2_DEPS := $(wildcard $(SRC_DIR)/bootloader/stage2/*.asm) \
                $(wildcard $(SRC_DIR)/bootloader/stage2/*.c) \
                $(wildcard $(SRC_DIR)/bootloader/stage2/*.h)
 
-KERNEL_DEPS := $(wildcard $(SRC_DIR)/kernel/*.c) $(wildcard $(SRC_DIR)/kernel/*.asm)
+KERNEL_DEPS := $(shell find $(SRC_DIR)/kernel -type f -name "*.c") \
+               $(shell find $(SRC_DIR)/kernel -type f -name "*.asm") \
+			   $(shell find $(SRC_DIR)/kernel -type f -name "*.inc") \
+			   $(shell find $(SRC_DIR)/kernel -type f -name "*.h")
 
 STAGE1_BIN   = $(BUILD_DIR)/stage1.bin
 STAGE2_BIN   = $(BUILD_DIR)/stage2.bin
@@ -111,7 +114,7 @@ $(STAGE2_BIN): $(STAGE2_DEPS) | $(BUILD_DIR)
 # Kernel
 #
 $(KERNEL_BIN): $(KERNEL_DEPS) | $(BUILD_DIR)
-	@$(MAKE) $(VMAKEFLAGS) -C $(SRC_DIR)/kernel BUILD_DIR=$(abspath $(BUILD_DIR)) V=$(V)
+	@$(MAKE) $(VMAKEFLAGS) -C $(SRC_DIR)/kernel BUILD_DIR=$(abspath $(BUILD_DIR)) ENABLE_DEPS=1 V=$(V)
 
 #
 # Tools
@@ -178,15 +181,16 @@ autolicense:
 #
 # Include dependencies
 #
-DEPFILES := $(shell find $(abspath $(BUILD_DIR)) -name '*.d' 2>/dev/null || true)
+DEPFILES := $(shell find $(abspath $(BUILD_DIR)) -name '*.d' 2>/dev/null)
 
--include $(BUILD_DIR)/*.d
 -include $(DEPFILES)
 
--include $(wildcard $(BUILD_DIR)/*.d)
-
--include $(wildcard $(BUILD_DIR)/kernel/c/*.d)
--include $(wildcard $(BUILD_DIR)/kernel/asm/*.d)
-
--include $(wildcard $(BUILD_DIR)/stage2/c/*.d)
--include $(wildcard $(BUILD_DIR)/stage2/asm/*.d)
+# -include $(DEPFILES)
+#
+# -include $(wildcard $(BUILD_DIR)/*.d)
+#
+# -include $(wildcard $(BUILD_DIR)/kernel/c/*.d)
+# -include $(wildcard $(BUILD_DIR)/kernel/asm/*.d)
+#
+# -include $(wildcard $(BUILD_DIR)/stage2/c/*.d)
+# -include $(wildcard $(BUILD_DIR)/stage2/asm/*.d)

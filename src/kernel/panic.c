@@ -8,14 +8,14 @@
  */
 
 #include "panic.h"
+#include <ctype.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include "comtypes.h"
-#include "ctype.h"
-#include "stdio.h"
-#include "x86.h"
+#include <utils/ptr.h>
+#include <arch/i686/io.h>
 
 static inline unsigned short get_ax(void) {
     unsigned short val;

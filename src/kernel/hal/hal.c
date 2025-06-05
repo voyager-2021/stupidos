@@ -7,12 +7,11 @@
  * See LICENSE file for full terms.
  */
 
-#pragma once
+#include "hal.h"
+#include <arch/i686/gdt.h>
+#include <arch/i686/idt.h>
 
-#include <stdint.h>
-
-void clrscr();
-void putc(char c);
-void puts(const char* str);
-void printf(const char* fmt, ...);
-void print_buffer(const char* msg, const void* buffer, uint32_t count);
+void HAL_Initialize() {
+    i686_GDT_Initialize();
+    i686_IDT_Initialize();
+}

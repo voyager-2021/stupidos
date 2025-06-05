@@ -5,13 +5,32 @@
 # You may not use this software for commercial purposes or profit.
 # See LICENSE file for full terms.
 
+export TARGET                ?= i686-elf
+export TARGET_ASM            ?= nasm
+export TARGET_ASMFLAGS       ?=
+export TARGET_CC             ?= $(TARGET)-gcc
+export TARGET_CFLAGS         ?= -std=c99 -g
+export TARGET_CXX            ?= $(TARGET)-g++
+export TARGET_CXXFLAGS       ?= -std=c99 -g
+export TARGET_LD             ?= $(TARGET)-gcc
+export TARGET_LDFLAGS        ?=
+export TARGET_LIBS           ?=
+
+TOOLCHAIN_PREFIX             ?= $(abspath ../../toolchain/$(TARGET))
+
+export PATH                  := $(TOOLCHAIN_PREFIX)/bin:$(PATH)
+
+
 TARGET_ASMFLAGS  += -f elf -MD -MF $(@:.obj=.d)
-TARGET_CFLAGS    += -ffreestanding -nostdlib -MMD -MF $(@:.obj=.d)
+TARGET_CFLAGS    += -ffreestanding -nostdlib -MMD -MP -MF $(@:.obj=.d) -I.
 TARGET_LIBS      += -lgcc
 TARGET_LDFLAGS   += -T linker.ld -nostdlib
 
-SOURCES_C         = $(wildcard *.c)
-SOURCES_ASM       = $(wildcard *.asm)
+SOURCES_C         = $(shell find . -type f -name "*.c")
+SOURCES_ASM       = $(shell find . -type f -name "*.asm")
+
+HEADERS_C         = $(shell find . -type f -name "*.h")
+HEADERS_ASM       = $(shell find . -type f -name "*.inc")
 
 OBJECTS_C         = $(patsubst %.c, $(BUILD_DIR)/kernel/c/%.obj, $(SOURCES_C))
 OBJECTS_ASM       = $(patsubst %.asm, $(BUILD_DIR)/kernel/asm/%.obj, $(SOURCES_ASM))
@@ -20,6 +39,7 @@ DEPS_C            = $(OBJECTS_C:.obj=.d)
 DEPS_ASM          = $(OBJECTS_ASM:.obj=.d)
 
 V                ?= 0
+EANBLE_DEPS      ?= 0
 
 ifeq ($(V), 1)
 	Q=
@@ -49,13 +69,31 @@ $(BUILD_DIR)/kernel.bin: $(OBJECTS_ASM) $(OBJECTS_C)
 	@$(call PRINT_ACTION,LD,build/$(call relpath,$@))
 	$(Q)$(TARGET_LD) $(TARGET_LDFLAGS) -Wl,-Map=$(BUILD_DIR)/kernel.map -o $@ $^ $(TARGET_LIBS) $(NULLSTDOUT)
 
-$(BUILD_DIR)/kernel/c/%.obj: %.c | $(BUILD_DIR)/kernel/c
-	@$(call PRINT_ACTION,CC,src/kernel/$(call relpath,$*).c)
+ifeq ($(EANBLE_DEPS), 0)
+HEADER_STAMP := $(BUILD_DIR)/.headers.stamp
+$(HEADER_STAMP): $(HEADERS_C)
+	@$(call PRINT_ACTION,STAMP,build/.headers.stamp)
+	$(Q)mkdir -p $(dir $@)
+	$(Q)touch $@
+endif
+
+$(BUILD_DIR)/kernel/c/%.obj: %.c $(HEADER_STAMP)
+	@$(call PRINT_ACTION,CC,src/kernel/$(call relpath,$<))
+	$(Q)mkdir -p $(dir $@)
 	$(Q)$(TARGET_CC) $(TARGET_CFLAGS) -c -o $@ $< $(NULLSTDOUT)
 
-$(BUILD_DIR)/kernel/asm/%.obj: %.asm | $(BUILD_DIR)/kernel/asm
-	@$(call PRINT_ACTION,AS,src/kernel/$(call relpath,$*).asm)
-	$(Q)$(TARGET_ASM) $(TARGET_ASMFLAGS) -o $@ $< -MD -MF $(BUILD_DIR)/kernel/asm/$*.d $(NULLSTDOUT)
+ifeq ($(EANBLE_DEPS), 0)
+ASM_HEADER_STAMP := $(BUILD_DIR)/.asm_headers.stamp
+$(ASM_HEADER_STAMP): $(HEADERS_ASM)
+	@$(call PRINT_ACTION,STAMP,build/.asm_headers.stamp)
+	$(Q)mkdir -p $(dir $@)
+	$(Q)touch $@
+endif
+
+$(BUILD_DIR)/kernel/asm/%.obj: %.asm $(ASM_HEADER_STAMP)
+	@$(call PRINT_ACTION,AS,src/kernel/$(call relpath,$<))
+	$(Q)mkdir -p $(dir $@)
+	$(Q)$(TARGET_ASM) $(TARGET_ASMFLAGS) -o $@ $< $(NULLSTDOUT)
 
 $(BUILD_DIR):
 	@$(call PRINT_ACTION,MKDIR,$(call relpath,$@))
@@ -69,9 +107,9 @@ $(BUILD_DIR)/kernel/asm:
 	@$(call PRINT_ACTION,MKDIR,build/$(call relpath,$@))
 	$(Q)mkdir -p $@
 
-$(BUILD_DIR)/kernel.bin.d: $(C_SOURCES) $(wildcard *.h) linker.ld
+$(BUILD_DIR)/kernel.bin.d: $(SOURCES_C) $(HEADERS_ASM) $(HEADERS_C) $(HEADERS_ASM)  linker.ld
 	@mkdir -p $(dir $@)
-	@printf "$(BUILD_DIR)/kernel.bin: " > $@
+	@printf "$(abspath BUILD_DIR)/kernel.bin: " > $@
 	@printf "%s " $^ >> $@
 	@printf "\n" >> $@
 
