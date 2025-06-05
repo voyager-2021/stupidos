@@ -21,14 +21,24 @@ i686_inb:
     in al, dx
     ret
 
-global i686_Halt
-i686_Halt:
+global i686_EnableInterrupts
+i686_EnableInterrupts:
+    sti
+    ret
+
+global i686_EnableInterrupts
+i686_DisableInterrupts:
     cli
-    hlt
-.halt:
-    jmp .halt
+    ret
 
 global crash_me
 crash_me:
     int 50
     ret
+
+global i686_panic
+i686_panic:
+    cli
+    hlt
+.halt:
+    jmp .halt

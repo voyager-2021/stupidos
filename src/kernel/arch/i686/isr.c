@@ -1,6 +1,6 @@
 #include <stddef.h>
 #include <stdio.h>
-#include <panic.h>
+#include "io.h"
 #include "isr.h"
 #include "idt.h"
 #include "gdt.h"
@@ -59,7 +59,7 @@ void __attribute__((cdecl)) i686_ISR_Handler(Registers* regs) {
     else if (regs->interrupt >= 32)
         printf("\r\nUnhandled interrupt %d!\r\n", regs->interrupt);
 
-    else
+    else {
         printf("\r\nUnhandled exception '%d' type '%s':\r\n", regs->interrupt, g_Exceptions[regs->interrupt]);
 
         printf("  eax=0x%x  ebx=0x%x  ecx=0x%x  edx=0x%x  esi=0x%x  edi=0x%x\r\n",
@@ -71,5 +71,12 @@ void __attribute__((cdecl)) i686_ISR_Handler(Registers* regs) {
         printf("  cs=0x%x  ds=0x%x  ss=0x%x  interrupt=0x%x  errorcode=0x%x\r\n",
             regs->cs, regs->ds, regs->ss, regs->interrupt, regs->error);
 
-        panic("Unhandled exception!", regs->error);
+        i686_panic();
+    }
+}
+
+void i686_ISR_RegisterHandler(int interrupt, ISRHandler handler)
+{
+    g_ISRHandlers[interrupt] = handler;
+    i686_IDT_EnableGate(interrupt);
 }
