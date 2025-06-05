@@ -26,11 +26,11 @@ TARGET_CFLAGS    += -ffreestanding -nostdlib -MMD -MP -MF $(@:.obj=.d) -I.
 TARGET_LIBS      += -lgcc
 TARGET_LDFLAGS   += -T linker.ld -nostdlib
 
-SOURCES_C         = $(shell find . -type f -name "*.c")
+SOURCES_C         = $(shell find . -type f -name "*.c" ! -path "./arch/i686/isr_gen.c") arch/i686/isr_gen.c
 SOURCES_ASM       = $(shell find . -type f -name "*.asm")
 
 HEADERS_C         = $(shell find . -type f -name "*.h")
-HEADERS_ASM       = $(shell find . -type f -name "*.inc")
+HEADERS_ASM       = $(shell find . -type f -name "*.inc") arch/i686/isr_gen.inc
 
 OBJECTS_C         = $(patsubst %.c, $(BUILD_DIR)/kernel/c/%.obj, $(SOURCES_C))
 OBJECTS_ASM       = $(patsubst %.asm, $(BUILD_DIR)/kernel/asm/%.obj, $(SOURCES_ASM))
@@ -112,6 +112,9 @@ $(BUILD_DIR)/kernel.bin.d: $(SOURCES_C) $(HEADERS_ASM) $(HEADERS_C) $(HEADERS_AS
 	@printf "$(abspath BUILD_DIR)/kernel.bin: " > $@
 	@printf "%s " $^ >> $@
 	@printf "\n" >> $@
+
+arch/i686/isr_gen.c arch/i686/isr_gen.inc:
+	@../../scripts/generate_isr.sh $@
 
 clean:
 	$(Q)rm -rf $(BUILD_DIR)/kernel

@@ -140,36 +140,73 @@ void printRegisters(void)
     printf("  IP=%x FLAGS=%x\r\n", get_ip(), get_flags());
 }
 
-__attribute__((noreturn)) void halt(const char* reason, bool noTrace, bool noRegisters) {
-    printf("\r");
+static void print_int(int value) {
+    char buf[12];
+    int i = 0;
+    if (value == 0) {
+        putc('0');
+        return;
+    }
+    if (value < 0) {
+        putc('-');
+        value = -value;
+    }
+    while (value) {
+        buf[i++] = '0' + (value % 10);
+        value /= 10;
+    }
+    while (i--) putc(buf[i]);
+}
+
+void vprintf(const char* fmt, va_list args) {
+    for (; *fmt; fmt++) {
+        if (*fmt != '%') {
+            putc(*fmt);
+            continue;
+        }
+        fmt++;
+        switch (*fmt) {
+            case 's': {
+                const char* str = va_arg(args, const char*);
+                puts(str);
+                break;
+            }
+            case 'd': {
+                int num = va_arg(args, int);
+                print_int(num);
+                break;
+            }
+            case 'c': {
+                char c = (char)va_arg(args, int);
+                putc(c);
+                break;
+            }
+            case '%': {
+                putc('%');
+                break;
+            }
+            default:
+                putc('?');
+        }
+    }
+}
+
+__attribute__((noreturn)) void panic(const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+
+    printf("\r\n");
     printf("**********************************\r\n");
     printf("****       KERNEL PANIC       ****\r\n");
     printf("**********************************\r\n");
 
-    printf(">>> %s\r\n", reason);
+    puts("\r\n>>> ");
+    vprintf(fmt, args);
+    puts("\r\n");
 
-    if (!noTrace) {
-        printf("*** BEGIN TRACE ***\r\n");
+    va_end(args);
 
-        unsigned short ss = get_ss();
-        unsigned short* bp = (unsigned short*)MK_FP(ss, get_bp());
-        printStackTrace(ss, bp);
-
-        printf("***  END TRACE  ***\r\n\n");
-    }
-
-    if (!noRegisters)
-        printRegisters();
-
-    // printf("**********************************\r\n");
-    // printf("****      SYSTEM STOPPED      ****\r\n");
-    // printf("**********************************\r\n");
-
-    // printf("\r\n\n*** KERNEL PANIC ***\r\n");
-    // printf(">>> %s\r\n", reason);
-    // printf("*** SYSTEM HALTED ***\r\n\n");
-
-    x86_Halt();
+    i686_Halt();
 
     __asm__ ("cli");
     __asm__ ("hlt");

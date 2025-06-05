@@ -39,4 +39,4 @@ static inline unsigned short get_ss(void);
 static inline unsigned short get_ip(void);
 static inline unsigned short get_flags(void);
 
-NORETURN void halt(const char* reason, bool noTrace, bool noRegisters);
+NORETURN void panic(const char* fmt, ...);
