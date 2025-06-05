@@ -7,10 +7,9 @@
  * See LICENSE file for full terms.
  */
 
+#include "e9.h"
 #include "io.h"
 
-#define UNUSED_PORT 0x80
-
-void i686_iowait() {
-    i686_outb(UNUSED_PORT, 0);
+void e9_putc(char c) {
+    i686_outb(0xe9, c);
 }

@@ -159,7 +159,7 @@ distclean:
 #
 run: $(FLOPPY_IMG)
 	@$(call PRINT_ACTION,RUN,$<)
-	$(Q)qemu-system-x86_64 -drive format=raw,if=floppy,file=$(FLOPPY_IMG)
+	$(Q)qemu-system-x86_64 -debugcon stdio -drive format=raw,if=floppy,file=$(FLOPPY_IMG)
 
 #
 # Debug

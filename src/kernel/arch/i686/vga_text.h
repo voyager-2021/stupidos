@@ -7,10 +7,7 @@
  * See LICENSE file for full terms.
  */
 
-#include "io.h"
+#pragma once
 
-#define UNUSED_PORT 0x80
-
-void i686_iowait() {
-    i686_outb(UNUSED_PORT, 0);
-}
+void VGA_clrscr();
+void VGA_putc(char c);
