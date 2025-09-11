@@ -1,14 +1,14 @@
 # stupidos
 
-![License](https://img.shields.io/badge/license-Bare%20Metal-blue.svg) ![Last Commit](https://img.shields.io/github/last-commit/voyager-2021/stupidos) ![Lines of Code](https://raw.githubusercontent.com/voyager-2021/stupidos/image-data/loc-badge.svg)
+![License](https://img.shields.io/badge/license-Check%20LICENSE%20section-blue.svg) ![Last Commit](https://img.shields.io/github/last-commit/voyager-2021/stupidos) ![Lines of Code](https://raw.githubusercontent.com/voyager-2021/stupidos/image-data/loc-badge.svg)
 
 ---
 
 ## Description
 
-My stupid floppy disk OS is a small educational operating system project built from scratch. It consists of a 512-byte Stage 1 bootloader, a Stage 2 bootloader that initializes the system and loads the kernel, and a simple kernel that currently prints "Hello from kernel!!!". Inspired by and code from chibicitiberiu’s nanobyte_os.
+My stupid floppy disk OS is a small educational operating system project built from scratch. It consists of a 512-byte Stage 1 bootloader, a Stage 2 bootloader that initializes the system and loads the kernel, and a simple kernel that currently prints "Hello from kernel!!!". Inspired by and lot of code from chibicitiberiu’s nanobyte_os.
 
-Here is a [showcase](https://i.imgur.com/m0SsWq3.png) of it in action.
+Here is a [showcase](https://i.imgur.com/m0SsWq3.png) of it in action. (Only works in browsers that support .apng like firefox)
 
 ---
 
@@ -63,4 +63,4 @@ make debug    # Run on Bochs
 
 ## License
 
-This project is licensed under a custom bare metal license similar to BSD 3-Clause. See the [LICENSE](./LICENSE) file for details.
+This project is licensed under a modified license. See the [LICENSE](./LICENSE) file for details.
