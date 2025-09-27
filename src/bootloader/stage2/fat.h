@@ -1,5 +1,4 @@
 /*
- * Bare-Metal License v1.0
  * Copyright (c) 2025 voyager-2021
  * This software is inspired by and includes code from chibicitiberiu's nanobyte_os
  *
@@ -11,7 +10,7 @@
 #include "stdint.h"
 #include "disk.h"
 
-typedef struct 
+typedef struct
 {
     uint8_t Name[11];
     uint8_t Attributes;
@@ -27,7 +26,7 @@ typedef struct
     uint32_t Size;
 } __attribute__((packed)) FAT_DirectoryEntry;
 
-typedef struct 
+typedef struct
 {
     int Handle;
     bool IsDirectory;

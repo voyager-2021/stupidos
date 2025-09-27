@@ -1,4 +1,3 @@
-; Bare-Metal License v1.0
 ; Copyright (c) 2025 voyager-2021
 ; This software is inspired by and includes code from chibicitiberiu's nanobyte_os
 ;
@@ -46,7 +45,7 @@
 .pmode:
     ; we are now in protected mode!
     [bits 32]
-    
+
     ; 6 - setup segment registers
     mov ax, 0x10
     mov ds, ax
@@ -218,7 +217,7 @@ x86_Disk_Read:
     mov ch, [bp + 12]    ; ch - cylinder (lower 8 bits)
     mov cl, [bp + 13]    ; cl - cylinder to bits 6-7
     shl cl, 6
-    
+
     mov al, [bp + 16]    ; cl - sector to bits 0-5
     and al, 3Fh
     or cl, al
@@ -236,7 +235,7 @@ x86_Disk_Read:
 
     ; set return value
     mov eax, 1
-    sbb eax, 0           ; 1 on success, 0 on fail   
+    sbb eax, 0           ; 1 on success, 0 on fail
 
     ; restore regs
     pop es
