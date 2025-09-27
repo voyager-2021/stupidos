@@ -28,6 +28,7 @@ STAGE1_BIN   = $(BUILD_DIR)/stage1.bin
 STAGE2_BIN   = $(BUILD_DIR)/stage2.bin
 KERNEL_BIN   = $(BUILD_DIR)/kernel.bin
 FLOPPY_IMG   = $(BUILD_DIR)/main_floppy.img
+DISK_IMG     = $(BUILD_DIR)/main_disk.raw
 
 TOOL_SOURCES = $(wildcard $(TOOLS_DIR)/*/*.c)
 TOOL_BINS    = $(patsubst $(TOOLS_DIR)/%, $(BUILD_DIR)/tools/%, $(TOOL_SOURCES:.c=))
@@ -41,6 +42,8 @@ V           ?= 0
 SRC_C       := $(shell find src -type f \( -name '*.c' -o -name '*.h' \))
 SRC_ASM     := $(shell find src -type f \( -name '*.asm' -o -name '*.S' \))
 SRC_MK      := $(shell find . -path ./toolchain -prune -o -type f -name 'Makefile')
+
+STAGE2_SIZE  = $(stat -c%s $(STAGE1_BIN))
 
 ifeq ($(V), 1)
 	Q=
@@ -67,7 +70,9 @@ endef
 #
 # Top-Level Targets
 #
-all:         $(FLOPPY_IMG) tools_fat
+all:         $(FLOPPY_IMG) $(DISK_IMG) tools_fat
+floppy:      $(FLOPPY_IMG)
+disk:        $(DISK_IMG)
 
 bootloader:  $(STAGE1_BIN) $(STAGE2_BIN)
 kernel:      $(KERNEL_BIN)
@@ -79,26 +84,12 @@ include scripts/toolchain.mk
 # Floppy image
 #
 $(FLOPPY_IMG): $(STAGE1_BIN) $(STAGE2_BIN) $(KERNEL_BIN) | $(BUILD_DIR)
-	@$(call PRINT_ACTION,DD,$@)
-	$(Q)$(DD) if=/dev/zero of=$@ bs=512 count=2880 status=$(VDDLEVEL)
-	@$(call PRINT_ACTION,MKFS,$@)
-	$(Q)$(MKFS) -F 12 -n "OS" $@ $(NULL)
-	@$(call PRINT_ACTION,DD,$@)
-	$(Q)$(DD) if=$(STAGE1_BIN) of=$@ conv=notrunc status=$(VDDLEVEL)
-	@$(call PRINT_ACTION,MCOPY,$(STAGE2_BIN))
-	@if ! $(MCOPY) -i $@ $(STAGE2_BIN) "::stage2.bin" $(NULL); then \
-		echo -e '*** Mcopy failed!'; \
-		$(call PRINT_ACTION,RM,$@);  \
-		rm -f $@; \
-		exit 1; \
-	fi
-	@$(call PRINT_ACTION,MCOPY,$(KERNEL_BIN))
-	@if ! $(MCOPY) -i $@ $(KERNEL_BIN) "::kernel.bin" $(NULL); then \
-		echo -e '*** Mcopy failed!'; \
-		$(call PRINT_ACTION,RM,$@); \
-		rm -f $@; \
-		exit 1; \
-	fi
+	@$(call PRINT_ACTION,FLOPPY,$@)
+	$(Q)./scripts/make_floppy_image.sh $@ $(BUILD_DIR) $(NULL)
+
+$(DISK_IMG): $(STAGE1_BIN) $(STAGE2_BIN) $(KERNEL_BIN) | $(BUILD_DIR)
+	@$(call PRINT_ACTION,DISK,$@)
+	$(Q)sudo ./scripts/make_disk_image.sh $(BUILD_DIR)/main_disk.raw $(MAKE_DISK_SIZE) $(BUILD_DIR) $(shell echo $$USER) $(NULL)
 
 #
 # Bootloader stages
@@ -159,6 +150,10 @@ distclean:
 run: $(FLOPPY_IMG)
 	@$(call PRINT_ACTION,RUN,$<)
 	$(Q)qemu-system-x86_64 -debugcon stdio -drive format=raw,if=floppy,file=$(FLOPPY_IMG)
+
+rundisk: $(DISK_IMG)
+	@$(call PRINT_ACTION,RUN,$<)
+	$(Q)qemu-system-x86_64 -debugcon stdio -drive format=raw,file=$(DISK_IMG)
 
 #
 # Debug

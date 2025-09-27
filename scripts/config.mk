@@ -2,6 +2,8 @@ SRC_DIR                       = src
 TOOLS_DIR                     = tools
 BUILD_DIR                     = build
 
+MAKE_DISK_SIZE                = 16777216
+
 export ASM                    =
 export ASMFLAGS               =
 export CC                     = gcc
